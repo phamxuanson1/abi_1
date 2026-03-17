@@ -45,7 +45,7 @@ public class Character : MonoBehaviour
 
     public void OnHit(float damage)
     {
-        Debug.Log("Hit");
+        //Debug.Log("Hit");
 
         // Nếu nhân vật chưa chết thì mới xử lý nhận sát thương
         if (!isDead)

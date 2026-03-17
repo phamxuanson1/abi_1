@@ -27,7 +27,7 @@ public class Player : Character
     private int coin = 0;
     private Vector3 savePoint;
 
-    private bool isSliding = false;
+    public bool isSliding = false;
     private float slideTimer = 0f;
     // Start is called before the first frame update
 
@@ -40,119 +40,96 @@ public class Player : Character
     }
     void Update()
     {
-        //Debug.Log( CheckGrounded());
-
         isGrounded = CheckGrounded();
-
-        //-1 -> 0 -> 1
         horizontal = Input.GetAxisRaw("Horizontal");
-        //verticle = Input.GetAxisRaw("Vertical");
 
-        if(isDead)
+        if (isDead) return;
+
+        // 1. ƯU TIÊN CAO NHẤT: XỬ LÝ LƯỚT
+        if (isSliding)
         {
-            return;
-        }
-
-        if (isGrounded)
-        {
-            if (isJumping)
-            {
-                return;
-            }
-
-            if(isAttack)
-            {
-                rb.linearVelocity = Vector2.zero;
-                return;
-            }
-
-            //jump
-            if (Input.GetKeyDown(KeyCode.W) && isGrounded)
-            {
-                Jump();
-            }
-            
-
-            if (Mathf.Abs(horizontal) > 0.1f)
-            {
-                ChangeAnim("run");
-            }
-
-            //attack
-            if(Input.GetKeyDown(KeyCode.C) && isGrounded)
-            {
-                //Debug.Log("attack");
-                Invoke(nameof(ResetAttack), 0.5f);
-                Attack();
-                isAttack = true;
-            }
-
-            //throw
-            if (Input.GetKeyDown(KeyCode.V) && isGrounded)
-            {
-                Throw();
-                Invoke(nameof(ResetAttack), 0.5f);
-                isAttack = true;
-            }
-
-        }
-        //Debug.Log("slideSpeed="+ slideSpeed);
-        if (slideTimer > 0) { 
-
-
             slideTimer -= Time.deltaTime;
 
-            rb.linearVelocity = transform.right * slideSpeed;
-
-            return;
-            //Debug.Log("slideTimer" + slideTimer);
-
+            if (slideTimer > 0)
+            {
+                rb.linearVelocity = transform.right * slideSpeed;
+                return; // Đang lướt thì CHẶN ngay, không cho chạy code bên dưới
+            }
+            else
+            {
+                // Hết thời gian lướt -> Nhả trạng thái
+                isSliding = false;
+                rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
+                ChangeAnim("idle");
+            }
         }
-        //Debug.Log("slide" + isSliding);
-        if (Input.GetKeyDown(KeyCode.X) && slideTimer <= 0)
+
+        // 2. NHẬN LỆNH BẮT ĐẦU LƯỚT
+        if (Input.GetKeyDown(KeyCode.X) && isGrounded && !isSliding)
         {
-            Debug.Log("slide");
             slideTimer = slideDuration;
             isSliding = true;
             ChangeAnim("slide");
+
+            // TẠO KHÓI Ở ĐÂY NÀY:
+            if (smoke != null && VFX_Offset != null)
+            {
+                Instantiate(smoke, VFX_Offset.position, transform.rotation);
+            }
+
+            return;
         }
 
-        if(slideTimer <= 0)
+        // 3. XỬ LÝ ATTACK (Đang đánh thì không di chuyển)
+        if (isAttack)
         {
-            isSliding = false;
-            ChangeAnim("idle");
+            rb.linearVelocity = Vector2.zero;
+            return;
         }
 
+        // 4. THAO TÁC CƠ BẢN (Chỉ chạy khi không lướt và không đánh)
+        if (isGrounded)
+        {
+            isJumping = false;
 
+            if (Input.GetKeyDown(KeyCode.W))
+            {
+                Jump();
+            }
 
-        //check falling
-        if (!isGrounded && rb.linearVelocity.y < 0) // vận tốc y < 0 nghĩa là đang rơi xuống
+            if (Input.GetKeyDown(KeyCode.C))
+            {
+                Invoke(nameof(ResetAttack), 0.5f);
+                Attack();
+                return;
+            }
+
+            if (Input.GetKeyDown(KeyCode.V))
+            {
+                Throw();
+                Invoke(nameof(ResetAttack), 0.5f);
+                return;
+            }
+        }
+
+        // 5. ANIMATION VÀ DI CHUYỂN BÌNH THƯỜNG
+        if (!isGrounded && rb.linearVelocity.y < 0)
         {
             ChangeAnim("fall");
-            isJumping = false;
         }
-
-        //moving
-        if (Mathf.Abs(horizontal) >0.1f)
+        else if (Mathf.Abs(horizontal) > 0.1f) // Dùng else if để xét tuần tự
         {
             ChangeAnim("run");
-
-            
-            rb.linearVelocity = new Vector2(horizontal  * speed, rb.linearVelocity.y); 
-
-            //transform.localScale = new Vector3(horizontal, 1, 1);
-            // Nếu horizontal là 1 (di chuyển sang phải), localScale sẽ là (1, 1, 1) => nhân vật hướng về bên phải
-            // Nếu horizontal là -1 (di chuyển sang trái), localScale sẽ là (-1, 1, 1) => nhân vật hướng về bên trái
-            transform.rotation = Quaternion.Euler(0, horizontal > 0 ? 0 : 180, 0); // Quay nhân vật sang phải hoặc trái dựa trên giá trị horizontal
+            rb.linearVelocity = new Vector2(horizontal * speed, rb.linearVelocity.y);
+            transform.rotation = Quaternion.Euler(0, horizontal > 0 ? 0 : 180, 0);
         }
-        //idle 
-        else if(isGrounded)
+        else if (isGrounded)
         {
             ChangeAnim("idle");
-            rb.linearVelocity = Vector2.zero;
+            rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
         }
     }
-    
+
     public override void OnInit()
     {
         base.OnInit();
@@ -236,7 +213,7 @@ public class Player : Character
     {
         attackArea.SetActive(true);
     }
-     private void DeActiveAttack()
+    private void DeActiveAttack()
     {
         attackArea.SetActive(false);
     }
@@ -264,7 +241,5 @@ public class Player : Character
             Invoke(nameof(OnInit), 1f); // Sau 1 giây sẽ gọi lại hàm OnInit để reset vị trí và trạng thái của nhân vật
         }
     }
-
-
 
 }

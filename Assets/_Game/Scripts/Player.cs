@@ -19,6 +19,7 @@ public class Player : Character
     private bool isJumping = false;
     private bool isAttack = false;
     private bool isDeath = false;
+    private bool isPaused = false;
 
 
     private float horizontal; //-1 (trái), 0 (đứng yên), 1 (phải)
@@ -127,6 +128,26 @@ public class Player : Character
         {
             ChangeAnim("idle");
             rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
+        }
+
+        // 6. Kiểm tra nếu bấm nút ESC
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            if (isPaused == false)
+            {
+                isPaused = true;
+                UIManager.instance.PauseGame();
+            }
+            else
+            {
+                isPaused = false;
+                UIManager.instance.ResumeGame();
+            }
+        }
+
+        if (isPaused == true)
+        {
+            return;
         }
     }
 

@@ -63,6 +63,8 @@ public class Character : MonoBehaviour
             healthBar.SetNewHp(hp);
 
             // Sinh ra (Instantiate) hiệu ứng chữ sát thương bay lên tại vị trí của nhân vật + 1 đơn vị lên trên
+            //Quaternion.identity có nghĩa là không xoay gì cả, giữ nguyên hướng mặc định của prefab
+            //Loại_Biến tên_biến = Instantiate(vật_mẫu, vị_trí, góc_xoay);
             Instantiate(combatTextPrefab, transform.position + Vector3.up, Quaternion.identity).OnInit(damage);
         }
     }

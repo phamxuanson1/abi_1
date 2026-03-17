@@ -9,6 +9,11 @@ public class Player : Character
     [SerializeField] private Transform throwPoint;
     [SerializeField] private GameObject attackArea;
 
+    [SerializeField] private float slideSpeed;
+    [SerializeField] private float slideDuration = 0.3f;
+    [SerializeField] private GameObject smoke;
+    [SerializeField] private Transform VFX_Offset; // Điểm xuất hiện hiệu ứng khói khi trượt
+
 
     private bool isGrounded = true;
     private bool isJumping = false;
@@ -16,11 +21,14 @@ public class Player : Character
     private bool isDeath = false;
 
 
-    private float horizontal;
+    private float horizontal; //-1 (trái), 0 (đứng yên), 1 (phải)
     [SerializeField] private float jumpForce = 350;
 
     private int coin = 0;
     private Vector3 savePoint;
+
+    private bool isSliding = false;
+    private float slideTimer = 0f;
     // Start is called before the first frame update
 
 
@@ -37,7 +45,7 @@ public class Player : Character
         isGrounded = CheckGrounded();
 
         //-1 -> 0 -> 1
-        //horizontal = Input.GetAxisRaw("Horizontal");
+        horizontal = Input.GetAxisRaw("Horizontal");
         //verticle = Input.GetAxisRaw("Vertical");
 
         if(isDead)
@@ -88,6 +96,34 @@ public class Player : Character
             }
 
         }
+        //Debug.Log("slideSpeed="+ slideSpeed);
+        if (slideTimer > 0) { 
+
+
+            slideTimer -= Time.deltaTime;
+
+            rb.linearVelocity = transform.right * slideSpeed;
+
+            return;
+            //Debug.Log("slideTimer" + slideTimer);
+
+        }
+        //Debug.Log("slide" + isSliding);
+        if (Input.GetKeyDown(KeyCode.X) && slideTimer <= 0)
+        {
+            Debug.Log("slide");
+            slideTimer = slideDuration;
+            isSliding = true;
+            ChangeAnim("slide");
+        }
+
+        if(slideTimer <= 0)
+        {
+            isSliding = false;
+            ChangeAnim("idle");
+        }
+
+
 
         //check falling
         if (!isGrounded && rb.linearVelocity.y < 0) // vận tốc y < 0 nghĩa là đang rơi xuống
@@ -100,7 +136,9 @@ public class Player : Character
         if (Mathf.Abs(horizontal) >0.1f)
         {
             ChangeAnim("run");
-            rb.linearVelocity = new Vector2(horizontal  * speed, rb.linearVelocity.y);
+
+            
+            rb.linearVelocity = new Vector2(horizontal  * speed, rb.linearVelocity.y); 
 
             //transform.localScale = new Vector3(horizontal, 1, 1);
             // Nếu horizontal là 1 (di chuyển sang phải), localScale sẽ là (1, 1, 1) => nhân vật hướng về bên phải

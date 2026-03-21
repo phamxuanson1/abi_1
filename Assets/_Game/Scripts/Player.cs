@@ -19,7 +19,6 @@ public class Player : Character
     private bool isJumping = false;
     private bool isAttack = false;
     private bool isDeath = false;
-    private bool isPaused = false;
 
 
     private float horizontal; //-1 (trái), 0 (đứng yên), 1 (phải)
@@ -43,6 +42,7 @@ public class Player : Character
     {
         isGrounded = CheckGrounded();
         horizontal = Input.GetAxisRaw("Horizontal");
+        //vertical = Input.GetAxisRaw("Vertical");
 
         if (isDead) return;
 
@@ -122,6 +122,8 @@ public class Player : Character
         {
             ChangeAnim("run");
             rb.linearVelocity = new Vector2(horizontal * speed, rb.linearVelocity.y);
+
+            // horizontal > 0 ? 0 : 180 có nghĩa là nếu đang đi sang phải thì xoay 0 độ, còn nếu đang đi sang trái thì xoay 180 độ để mặt hướng về bên trái
             transform.rotation = Quaternion.Euler(0, horizontal > 0 ? 0 : 180, 0);
         }
         else if (isGrounded)
@@ -130,25 +132,6 @@ public class Player : Character
             rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
         }
 
-        // 6. Kiểm tra nếu bấm nút ESC
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            if (isPaused == false)
-            {
-                isPaused = true;
-                UIManager.instance.PauseGame();
-            }
-            else
-            {
-                isPaused = false;
-                UIManager.instance.ResumeGame();
-            }
-        }
-
-        if (isPaused == true)
-        {
-            return;
-        }
     }
 
     public override void OnInit()
